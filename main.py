@@ -4,6 +4,10 @@ from panda3d.core import AmbientLight
 from panda3d.core import DirectionalLight
 from panda3d.core import WindowProperties
 from panda3d.core import Vec4, Vec3
+from panda3d.core import CollisionTraverser
+from panda3d.core import CollisionHandlerPusher
+from panda3d.core import CollisionSphere, CollisionNode
+from panda3d.core import CollisionTube
 
 class Game(ShowBase):
 	def __init__(self):
@@ -17,6 +21,39 @@ class Game(ShowBase):
 		self.cameraInit(pos=Vec3(0, 0, 32), hpr=Vec3(0, -90, 0))
 		self.inputInit()
 
+		self.player.collider.show()
+		self.pusher.addCollider(self.player.collider, self.player)
+		self.cTrav.addCollider(self.player.collider, self.pusher)
+		self.pusher.setHorizontal(True)
+
+		wallSolid = CollisionTube(-8.0, 0, 0, 8.0, 0, 0, 0.2)
+		wallNode = CollisionNode("wall")
+		wallNode.addSolid(wallSolid)
+		wall = render.attachNewNode(wallNode)
+		wall.setY(8.0)
+		wall.show()
+
+		wallSolid = CollisionTube(-8.0, 0, 0, 8.0, 0, 0, 0.2)
+		wallNode = CollisionNode("wall")
+		wallNode.addSolid(wallSolid)
+		wall = render.attachNewNode(wallNode)
+		wall.setY(-8.0)
+		wall.show()
+
+		wallSolid = CollisionTube(0, -8.0, 0, 0, 8.0, 0, 0.2)
+		wallNode = CollisionNode("wall")
+		wallNode.addSolid(wallSolid)
+		wall = render.attachNewNode(wallNode)
+		wall.setX(8.0)
+		wall.show()
+
+		wallSolid = CollisionTube(0, -8.0, 0, 0, 8.0, 0, 0.2)
+		wallNode = CollisionNode("wall")
+		wallNode.addSolid(wallSolid)
+		wall = render.attachNewNode(wallNode)
+		wall.setX(-8.0)
+		wall.show()
+
 		# Set up a task that we'll run consistently
 		self.updateTask = taskMgr.add(self.update, "update")
 
@@ -29,6 +66,11 @@ class Game(ShowBase):
 		# Load a backdrop model and attach it to the Scene Graph
 		self.environment = loader.loadModel(levelname)
 		self.environment.reparentTo(render)
+
+		# Set up level collision
+		self.cTrav = CollisionTraverser()
+		self.pusher = CollisionHandlerPusher()
+
 
 	def lightingInit(self):
 		# Kind of dark with just an ambient light, maybe a directional light eh
@@ -105,6 +147,11 @@ class Character(Actor):
 
 		# Var for actor speed
 		self.characterMovementSpeed = 5.0
+		
+		# Collision
+		colliderNode = CollisionNode("player")
+		colliderNode.addSolid(CollisionSphere(0, 0, 0, 0.3))
+		self.collider = self.attachNewNode(colliderNode)
 
 	def move(self, delta):
 		self.setPos(self.getPos() + delta * self.characterMovementSpeed)
