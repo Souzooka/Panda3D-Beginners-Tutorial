@@ -8,6 +8,8 @@ from panda3d.core import CollisionTraverser
 from panda3d.core import CollisionHandlerPusher
 from panda3d.core import CollisionSphere, CollisionNode
 from panda3d.core import CollisionTube
+from Player import *
+from WalkingEnemy import *
 
 class Game(ShowBase):
 	def __init__(self):
@@ -15,44 +17,14 @@ class Game(ShowBase):
 
 		# Call various initialization methods on class
 		self.windowInit(1280, 720)
-		self.levelInit("Models/Misc/environment")
+		self.levelInit("Models/Environment/environment")
 		self.lightingInit()
 		self.playerInit()
 		self.cameraInit(pos=Vec3(0, 0, 32), hpr=Vec3(0, -90, 0))
 		self.inputInit()
+		self.collisionInit()
 
-		self.player.collider.show()
-		self.pusher.addCollider(self.player.collider, self.player)
-		self.cTrav.addCollider(self.player.collider, self.pusher)
-		self.pusher.setHorizontal(True)
-
-		wallSolid = CollisionTube(-8.0, 0, 0, 8.0, 0, 0, 0.2)
-		wallNode = CollisionNode("wall")
-		wallNode.addSolid(wallSolid)
-		wall = render.attachNewNode(wallNode)
-		wall.setY(8.0)
-		wall.show()
-
-		wallSolid = CollisionTube(-8.0, 0, 0, 8.0, 0, 0, 0.2)
-		wallNode = CollisionNode("wall")
-		wallNode.addSolid(wallSolid)
-		wall = render.attachNewNode(wallNode)
-		wall.setY(-8.0)
-		wall.show()
-
-		wallSolid = CollisionTube(0, -8.0, 0, 0, 8.0, 0, 0.2)
-		wallNode = CollisionNode("wall")
-		wallNode.addSolid(wallSolid)
-		wall = render.attachNewNode(wallNode)
-		wall.setX(8.0)
-		wall.show()
-
-		wallSolid = CollisionTube(0, -8.0, 0, 0, 8.0, 0, 0.2)
-		wallNode = CollisionNode("wall")
-		wallNode.addSolid(wallSolid)
-		wall = render.attachNewNode(wallNode)
-		wall.setX(-8.0)
-		wall.show()
+		self.tempEnemy = WalkingEnemy(Vec3(5, 0, 0))
 
 		# Set up a task that we'll run consistently
 		self.updateTask = taskMgr.add(self.update, "update")
@@ -84,15 +56,41 @@ class Game(ShowBase):
 
 	def playerInit(self):
 		# Initialize and render player character
-		self.player = Character()
-		self.player.reparentTo(render)
-
-		# Set an animation for the actor
-		self.player.loop("walk")
+		self.player = Player()
+		self.player.actor.reparentTo(render)
 
 	def cameraInit(self, pos, hpr):
 		self.camera.setPos(pos)
 		self.camera.setHpr(hpr)
+
+	def collisionInit(self):
+		self.pusher.addCollider(self.player.collider, self.player.actor)
+		self.cTrav.addCollider(self.player.collider, self.pusher)
+		self.pusher.setHorizontal(True)
+
+		wallSolid = CollisionTube(-8.0, 0, 0, 8.0, 0, 0, 0.2)
+		wallNode = CollisionNode("wall")
+		wallNode.addSolid(wallSolid)
+		wall = render.attachNewNode(wallNode)
+		wall.setY(8.0)
+
+		wallSolid = CollisionTube(-8.0, 0, 0, 8.0, 0, 0, 0.2)
+		wallNode = CollisionNode("wall")
+		wallNode.addSolid(wallSolid)
+		wall = render.attachNewNode(wallNode)
+		wall.setY(-8.0)
+
+		wallSolid = CollisionTube(0, -8.0, 0, 0, 8.0, 0, 0.2)
+		wallNode = CollisionNode("wall")
+		wallNode.addSolid(wallSolid)
+		wall = render.attachNewNode(wallNode)
+		wall.setX(8.0)
+
+		wallSolid = CollisionTube(0, -8.0, 0, 0, 8.0, 0, 0.2)
+		wallNode = CollisionNode("wall")
+		wallNode.addSolid(wallSolid)
+		wall = render.attachNewNode(wallNode)
+		wall.setX(-8.0)
 
 	def inputInit(self):
 		# Input states
@@ -125,37 +123,13 @@ class Game(ShowBase):
 
 	# Main game logic we have running every frame
 	def update(self, task):
-		# Get the amount of time since the last update
 		dt = globalClock.getDt()
 
-		if self.keyMap["up"]:
-			self.player.move(Vec3.forward() * dt)
-		if self.keyMap["down"]:
-			self.player.move(Vec3.back() * dt)
-		if self.keyMap["left"]:
-			self.player.move(Vec3.left() * dt)
-		if self.keyMap["right"]:
-			self.player.move(Vec3.right() * dt)
-		if self.keyMap["shoot"]:
-			print ("Zap!")
+		self.player.update(self.keyMap, dt)
+
+		self.tempEnemy.update(self.player, dt)
 
 		return task.cont
-
-class Character(Actor):
-	def __init__(self):
-		Actor.__init__(self, "Models/PandaChan/act_p3d_chan", {"walk" : "Models/PandaChan/a_p3d_chan_run"})
-
-		# Var for actor speed
-		self.characterMovementSpeed = 5.0
-		
-		# Collision
-		colliderNode = CollisionNode("player")
-		colliderNode.addSolid(CollisionSphere(0, 0, 0, 0.3))
-		self.collider = self.attachNewNode(colliderNode)
-
-	def move(self, delta):
-		self.setPos(self.getPos() + delta * self.characterMovementSpeed)
-
 
 game = Game()
 game.run()
