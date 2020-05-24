@@ -21,7 +21,6 @@ class Game(ShowBase):
 		self.updateTask = taskMgr.add(self.update, "update")
 
 	def windowInit(self, h, w):
-		# Set the window size to 1280x720
 		properties = WindowProperties()
 		properties.setSize(h, w)
 		self.win.requestProperties(properties)
@@ -88,13 +87,13 @@ class Game(ShowBase):
 		dt = globalClock.getDt()
 
 		if self.keyMap["up"]:
-			self.player.move(Vec3(0, 1.0*dt, 0))
+			self.player.move(Vec3.forward() * dt)
 		if self.keyMap["down"]:
-			self.player.move(Vec3(0, -1.0*dt, 0))
+			self.player.move(Vec3.back() * dt)
 		if self.keyMap["left"]:
-			self.player.move(Vec3(-1.0*dt, 0, 0))
+			self.player.move(Vec3.left() * dt)
 		if self.keyMap["right"]:
-			self.player.move(Vec3(1.0*dt, 0, 0))
+			self.player.move(Vec3.right() * dt)
 		if self.keyMap["shoot"]:
 			print ("Zap!")
 
